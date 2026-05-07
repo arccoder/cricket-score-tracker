@@ -233,18 +233,18 @@ const App = () => {
           <div className={`${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} rounded-3xl shadow-xl p-6 border`}>
             <div className="flex items-center gap-2 mb-6">
               <Settings className="text-indigo-500" />
-              <h2 className="text-xl font-bold">Game Configuration</h2>
+              <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Game Configuration</h2>
             </div>
             
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className={`text-xs font-bold uppercase ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Team 1</label>
-                  <input className={`w-full p-3 border rounded-xl ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`} value={teamNames.team1} onChange={e => setTeamNames({...teamNames, team1: e.target.value})} />
+                  <input className={`w-full p-3 border rounded-xl ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'}`} value={teamNames.team1} onChange={e => setTeamNames({...teamNames, team1: e.target.value})} />
                 </div>
                 <div className="space-y-1">
                   <label className={`text-xs font-bold uppercase ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Team 2</label>
-                  <input className={`w-full p-3 border rounded-xl ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`} value={teamNames.team2} onChange={e => setTeamNames({...teamNames, team2: e.target.value})} />
+                  <input className={`w-full p-3 border rounded-xl ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'}`} value={teamNames.team2} onChange={e => setTeamNames({...teamNames, team2: e.target.value})} />
                 </div>
               </div>
 
@@ -337,7 +337,7 @@ const App = () => {
                     <input 
                       type="number" 
                       placeholder="e.g. 7 or 12"
-                      className={`w-full pl-10 pr-4 py-3 border rounded-xl font-bold ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'}`}
+                      className={`w-full pl-10 pr-4 py-3 border rounded-xl font-bold ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'}`}
                       value={customRunInput}
                       onChange={e => setCustomRunInput(e.target.value)}
                     />
