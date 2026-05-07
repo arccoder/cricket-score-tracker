@@ -8,18 +8,24 @@ import {
   Download,
   Plus,
   AlertTriangle,
-  Keyboard
+  Keyboard,
+  Moon,
+  Sun
 } from 'lucide-react';
 
 /**
  * Advanced Cricket Score Tracking Application
  * - Custom runs (text input) for rare scenarios
  * - CSV Export functionality for match logs
+ * - Dark mode toggle
  * - Complex scoring: Extras + Runs + Run Outs
  * - Multi-player/Overs setup
  */
 
 const App = () => {
+  // Theme State
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
   // Game Configuration State
   const [gameState, setGameState] = useState('setup'); 
   const [totalOvers, setTotalOvers] = useState(5);
@@ -40,6 +46,18 @@ const App = () => {
 
   const currentInnings = innings[currentInningsIdx];
   const maxWickets = totalPlayers - 1;
+
+  // Persistence for Theme
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('cricket-theme');
+    if (savedTheme === 'dark') setIsDarkMode(true);
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = !isDarkMode;
+    setIsDarkMode(newTheme);
+    localStorage.setItem('cricket-theme', newTheme ? 'dark' : 'light');
+  };
 
   // CSV Export Logic
   const exportToCSV = () => {
@@ -73,7 +91,6 @@ const App = () => {
   const recordBall = (type) => {
     if (gameState === 'finished') return;
 
-    // Use custom input if active, otherwise use preset runs
     const runsToRecord = showCustomInput ? (parseInt(customRunInput) || 0) : selectedRuns;
 
     let runChange = 0;
@@ -145,12 +162,10 @@ const App = () => {
     updatedInnings[currentInningsIdx] = target;
     setInnings(updatedInnings);
     
-    // Reset UI states
     setSelectedRuns(0);
     setCustomRunInput('');
     setShowCustomInput(false);
 
-    // Innings completion check
     const isWicketsOut = target.wickets >= maxWickets;
     const isOversDone = target.deliveries >= totalOvers * 6;
     const isTargetReached = currentInningsIdx === 1 && target.runs > innings[0].runs;
@@ -184,29 +199,38 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 font-sans text-slate-900 pb-12">
-      <header className="bg-slate-900 text-white p-4 sticky top-0 z-20 shadow-lg">
+    <div className={`min-h-screen font-sans transition-colors duration-300 pb-12 ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}`}>
+      <header className={`${isDarkMode ? 'bg-slate-900 border-b border-slate-800' : 'bg-slate-900'} text-white p-4 sticky top-0 z-20 shadow-lg`}>
         <div className="max-w-xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Trophy className="text-amber-400 w-6 h-6" />
             <h1 className="font-bold text-lg uppercase tracking-tight">Cricket Master</h1>
           </div>
-          {gameState !== 'setup' && (
-            <div className="flex gap-3">
-              <button onClick={exportToCSV} className="text-slate-400 hover:text-white" title="Export CSV">
-                <Download className="w-5 h-5" />
-              </button>
-              <button onClick={() => setGameState('setup')} className="text-slate-400 hover:text-white">
-                <RotateCcw className="w-5 h-5" />
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={toggleTheme} 
+              className="p-2 rounded-full hover:bg-slate-800 transition-colors"
+              aria-label="Toggle Dark Mode"
+            >
+              {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-400" />}
+            </button>
+            {gameState !== 'setup' && (
+              <div className="flex gap-3">
+                <button onClick={exportToCSV} className="text-slate-400 hover:text-white" title="Export CSV">
+                  <Download className="w-5 h-5" />
+                </button>
+                <button onClick={() => setGameState('setup')} className="text-slate-400 hover:text-white">
+                  <RotateCcw className="w-5 h-5" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
       <main className="max-w-xl mx-auto p-4 space-y-4">
         {gameState === 'setup' ? (
-          <div className="bg-white rounded-3xl shadow-xl p-6 border border-slate-200">
+          <div className={`${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} rounded-3xl shadow-xl p-6 border`}>
             <div className="flex items-center gap-2 mb-6">
               <Settings className="text-indigo-500" />
               <h2 className="text-xl font-bold">Game Configuration</h2>
@@ -215,67 +239,67 @@ const App = () => {
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">Team 1</label>
-                  <input className="w-full p-3 bg-slate-50 border rounded-xl" value={teamNames.team1} onChange={e => setTeamNames({...teamNames, team1: e.target.value})} />
+                  <label className={`text-xs font-bold uppercase ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Team 1</label>
+                  <input className={`w-full p-3 border rounded-xl ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`} value={teamNames.team1} onChange={e => setTeamNames({...teamNames, team1: e.target.value})} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">Team 2</label>
-                  <input className="w-full p-3 bg-slate-50 border rounded-xl" value={teamNames.team2} onChange={e => setTeamNames({...teamNames, team2: e.target.value})} />
+                  <label className={`text-xs font-bold uppercase ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Team 2</label>
+                  <input className={`w-full p-3 border rounded-xl ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`} value={teamNames.team2} onChange={e => setTeamNames({...teamNames, team2: e.target.value})} />
                 </div>
               </div>
 
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <label className="text-sm font-bold text-slate-600">Match Overs</label>
-                  <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-bold">{totalOvers}</span>
+                  <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Match Overs</label>
+                  <span className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 px-3 py-1 rounded-full font-bold">{totalOvers}</span>
                 </div>
-                <input type="range" min="1" max="50" className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer" value={totalOvers} onChange={e => setTotalOvers(parseInt(e.target.value))} />
+                <input type="range" min="1" max="50" className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer" value={totalOvers} onChange={e => setTotalOvers(parseInt(e.target.value))} />
               </div>
 
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <label className="text-sm font-bold text-slate-600">Players per Team</label>
-                  <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-bold">{totalPlayers}</span>
+                  <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Players per Team</label>
+                  <span className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 px-3 py-1 rounded-full font-bold">{totalPlayers}</span>
                 </div>
-                <input type="range" min="2" max="11" className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer" value={totalPlayers} onChange={e => setTotalPlayers(parseInt(e.target.value))} />
+                <input type="range" min="2" max="11" className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer" value={totalPlayers} onChange={e => setTotalPlayers(parseInt(e.target.value))} />
               </div>
 
-              <button onClick={startGame} className="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-transform">
+              <button onClick={startGame} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-all">
                 Let's Play
               </button>
             </div>
           </div>
         ) : gameState === 'finished' ? (
-          <div className="bg-white rounded-3xl shadow-xl p-8 text-center border-t-8 border-indigo-500">
+          <div className={`${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} rounded-3xl shadow-xl p-8 text-center border-t-8 border-indigo-500`}>
             <Trophy className="w-16 h-16 text-amber-500 mx-auto mb-4" />
             <h2 className="text-2xl font-black mb-2">Match Complete</h2>
-            <div className="bg-indigo-50 text-indigo-700 py-4 px-6 rounded-2xl text-xl font-bold mb-8">{getMatchResult()}</div>
-            <button onClick={exportToCSV} className="w-full mb-3 flex items-center justify-center gap-2 bg-slate-100 text-slate-700 font-bold py-3 rounded-xl border border-slate-200"><Download className="w-4 h-4"/> Export Full Log</button>
-            <button onClick={() => setGameState('setup')} className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl">New Match</button>
+            <div className={`${isDarkMode ? 'bg-indigo-900/30 text-indigo-300' : 'bg-indigo-50 text-indigo-700'} py-4 px-6 rounded-2xl text-xl font-bold mb-8`}>{getMatchResult()}</div>
+            <button onClick={exportToCSV} className={`w-full mb-3 flex items-center justify-center gap-2 font-bold py-3 rounded-xl border ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'}`}><Download className="w-4 h-4"/> Export Full Log</button>
+            <button onClick={() => setGameState('setup')} className="w-full bg-slate-900 dark:bg-indigo-600 text-white font-bold py-4 rounded-xl">New Match</button>
           </div>
         ) : (
           <div className="space-y-4">
             {/* Scorecard */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="bg-slate-800 text-white p-3 flex justify-between items-center text-xs font-bold uppercase tracking-widest">
+            <div className={`${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} rounded-2xl shadow-sm border overflow-hidden`}>
+              <div className="bg-slate-800 dark:bg-slate-800/50 text-white p-3 flex justify-between items-center text-xs font-bold uppercase tracking-widest">
                 <span>{currentInnings.team} Innings</span>
-                <span>{gameState === 'innings1' ? 'First Innings' : 'Second Innings'}</span>
+                <span className="opacity-60">{gameState === 'innings1' ? '1st Innings' : '2nd Innings'}</span>
               </div>
               <div className="p-6">
                 <div className="flex justify-between items-end">
                   <div>
-                    <div className="text-5xl font-black text-slate-800">
-                      {currentInnings.runs} <span className="text-2xl text-slate-300 font-medium">/ {currentInnings.wickets}</span>
+                    <div className={`text-5xl font-black ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                      {currentInnings.runs} <span className={`text-2xl font-medium ${isDarkMode ? 'text-slate-600' : 'text-slate-300'}`}>/ {currentInnings.wickets}</span>
                     </div>
-                    <div className="text-slate-500 font-bold mt-1">
-                      Overs: {formatOvers(currentInnings.deliveries)} <span className="font-normal text-slate-400">/ {totalOvers}</span>
+                    <div className={`font-bold mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      Overs: {formatOvers(currentInnings.deliveries)} <span className={`font-normal ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>/ {totalOvers}</span>
                     </div>
                   </div>
                   {currentInningsIdx === 1 && (
-                    <div className="text-right bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100">
-                      <p className="text-[10px] font-bold text-indigo-400 uppercase">Target</p>
-                      <p className="text-xl font-black text-indigo-700">{innings[0].runs + 1}</p>
-                      <p className="text-[10px] text-indigo-600 font-medium italic">Need {innings[0].runs + 1 - currentInnings.runs} in {totalOvers * 6 - currentInnings.deliveries} balls</p>
+                    <div className={`text-right px-4 py-2 rounded-xl border ${isDarkMode ? 'bg-indigo-900/20 border-indigo-900/50' : 'bg-indigo-50 border-indigo-100'}`}>
+                      <p className={`text-[10px] font-bold uppercase ${isDarkMode ? 'text-indigo-400' : 'text-indigo-400'}`}>Target</p>
+                      <p className={`text-xl font-black ${isDarkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>{innings[0].runs + 1}</p>
+                      <p className={`text-[10px] font-medium italic ${isDarkMode ? 'text-indigo-500' : 'text-indigo-600'}`}>Need {innings[0].runs + 1 - currentInnings.runs} in {totalOvers * 6 - currentInnings.deliveries} balls</p>
                     </div>
                   )}
                 </div>
@@ -283,12 +307,12 @@ const App = () => {
             </div>
 
             {/* Run Selection Row */}
-            <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+            <div className={`${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-3 rounded-2xl border shadow-sm space-y-3`}>
               <div className="flex justify-between items-center px-1">
-                <p className="text-[10px] font-bold text-slate-400 uppercase">Runs Scored on this ball</p>
+                <p className={`text-[10px] font-bold uppercase ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Runs Scored</p>
                 <button 
                   onClick={() => setShowCustomInput(!showCustomInput)} 
-                  className={`text-[10px] font-bold px-2 py-1 rounded ${showCustomInput ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'}`}
+                  className={`text-[10px] font-bold px-2 py-1 rounded transition-colors ${showCustomInput ? 'bg-indigo-600 text-white' : isDarkMode ? 'bg-slate-800 text-slate-400 hover:text-slate-300' : 'bg-slate-100 text-slate-500'}`}
                 >
                   {showCustomInput ? 'Back to presets' : 'Enter custom runs'}
                 </button>
@@ -297,7 +321,11 @@ const App = () => {
               {!showCustomInput ? (
                 <div className="flex justify-between gap-1">
                   {[0, 1, 2, 3, 4, 6].map(num => (
-                    <button key={num} onClick={() => setSelectedRuns(num)} className={`flex-1 py-3 rounded-xl font-black transition-all ${selectedRuns === num ? 'bg-indigo-600 text-white shadow-md scale-105' : 'bg-slate-50 text-slate-400'}`}>
+                    <button 
+                      key={num} 
+                      onClick={() => setSelectedRuns(num)} 
+                      className={`flex-1 py-3 rounded-xl font-black transition-all ${selectedRuns === num ? 'bg-indigo-600 text-white shadow-md scale-105' : isDarkMode ? 'bg-slate-800 text-slate-500' : 'bg-slate-50 text-slate-400'}`}
+                    >
                       {num}
                     </button>
                   ))}
@@ -309,7 +337,7 @@ const App = () => {
                     <input 
                       type="number" 
                       placeholder="e.g. 7 or 12"
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border rounded-xl font-bold"
+                      className={`w-full pl-10 pr-4 py-3 border rounded-xl font-bold ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'}`}
                       value={customRunInput}
                       onChange={e => setCustomRunInput(e.target.value)}
                     />
@@ -320,26 +348,26 @@ const App = () => {
 
             {/* Action Buttons */}
             <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => recordBall('LEGAL')} className="bg-emerald-600 text-white py-6 rounded-2xl font-black text-xl shadow-lg active:scale-95">RECORD BALL</button>
+              <button onClick={() => recordBall('LEGAL')} className="bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-2xl font-black text-xl shadow-lg active:scale-95 transition-colors">RECORD BALL</button>
               <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => recordBall('WIDE')} className="bg-amber-500 text-white rounded-xl font-bold text-xs">WIDE</button>
-                <button onClick={() => recordBall('NO_BALL')} className="bg-amber-500 text-white rounded-xl font-bold text-xs">NO-BALL</button>
-                <button onClick={() => recordBall('BYE')} className="bg-slate-400 text-white rounded-xl font-bold text-xs">BYES</button>
-                <button onClick={() => recordBall('LEG_BYE')} className="bg-slate-400 text-white rounded-xl font-bold text-xs">LEG BYE</button>
+                <button onClick={() => recordBall('WIDE')} className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-xs transition-colors">WIDE</button>
+                <button onClick={() => recordBall('NO_BALL')} className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-xs transition-colors">NO-BALL</button>
+                <button onClick={() => recordBall('BYE')} className={`${isDarkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-400 hover:bg-slate-500'} text-white rounded-xl font-bold text-xs transition-colors`}>BYES</button>
+                <button onClick={() => recordBall('LEG_BYE')} className={`${isDarkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-400 hover:bg-slate-500'} text-white rounded-xl font-bold text-xs transition-colors`}>LEG BYE</button>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => recordBall('WICKET')} className="bg-red-600 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-lg active:scale-95">Out (Bowled/Caught)</button>
-              <button onClick={() => recordBall('RUN_OUT')} className="bg-orange-600 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-lg active:scale-95">Run Out</button>
+              <button onClick={() => recordBall('WICKET')} className="bg-red-600 hover:bg-red-700 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-colors">Out (Bowled/Caught)</button>
+              <button onClick={() => recordBall('RUN_OUT')} className="bg-orange-600 hover:bg-orange-700 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-colors">Run Out</button>
             </div>
 
             {/* Ball-by-ball Log */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="px-4 py-3 bg-slate-50 border-b flex items-center justify-between">
+            <div className={`${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} rounded-2xl shadow-sm border overflow-hidden`}>
+              <div className={`px-4 py-3 border-b flex items-center justify-between ${isDarkMode ? 'bg-slate-800/40 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
                 <div className="flex items-center gap-2">
-                  <History className="w-4 h-4 text-slate-400" />
-                  <span className="text-xs font-bold text-slate-600 uppercase">Recent History</span>
+                  <History className={`w-4 h-4 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                  <span className={`text-xs font-bold uppercase ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Recent History</span>
                 </div>
                 <button onClick={exportToCSV} className="text-[10px] flex items-center gap-1 text-indigo-500 font-bold hover:underline">
                   <Download className="w-3 h-3" /> Export CSV
@@ -347,20 +375,20 @@ const App = () => {
               </div>
               <div className="max-h-48 overflow-y-auto">
                 {currentInnings.history.map((ball, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 border-b border-slate-50 last:border-0 hover:bg-slate-50">
-                    <span className="text-xs font-mono text-slate-400">Over {ball.over}.{ball.ballInOver}</span>
-                    <span className={`text-sm font-black ${ball.isWicket ? 'text-red-500' : 'text-slate-700'}`}>{ball.label}</span>
+                  <div key={idx} className={`flex items-center justify-between p-3 border-b last:border-0 ${isDarkMode ? 'border-slate-800 hover:bg-slate-800/30' : 'border-slate-50 hover:bg-slate-50'}`}>
+                    <span className={`text-xs font-mono ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>Over {ball.over}.{ball.ballInOver}</span>
+                    <span className={`text-sm font-black ${ball.isWicket ? 'text-red-500' : isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{ball.label}</span>
                   </div>
                 ))}
-                {currentInnings.history.length === 0 && <div className="p-8 text-center text-slate-300 italic text-sm">Waiting for the toss...</div>}
+                {currentInnings.history.length === 0 && <div className={`p-8 text-center italic text-sm ${isDarkMode ? 'text-slate-700' : 'text-slate-300'}`}>Waiting for the toss...</div>}
               </div>
             </div>
           </div>
         )}
       </main>
 
-      <footer className="max-w-xl mx-auto px-4 text-center">
-        <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-200 text-[10px] text-slate-400 font-medium">
+      <footer className="max-w-xl mx-auto px-4 text-center mt-6">
+        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full shadow-sm border text-[10px] font-medium ${isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-500' : 'bg-white border-slate-200 text-slate-400'}`}>
           <AlertTriangle className="w-3 h-3 text-amber-500" />
           Tip: Use the "Custom runs" toggle for rare high-scoring balls.
         </div>
