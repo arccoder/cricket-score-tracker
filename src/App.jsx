@@ -239,29 +239,33 @@ const App = () => {
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className={`text-xs font-bold uppercase ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Team 1</label>
+                  <label className={`text-xs font-bold uppercase ${isDarkMode ? 'text-slate-400' : 'text-slate-700'}`}>Team 1</label>
                   <input className={`w-full p-3 border rounded-xl ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'}`} value={teamNames.team1} onChange={e => setTeamNames({...teamNames, team1: e.target.value})} />
                 </div>
                 <div className="space-y-1">
-                  <label className={`text-xs font-bold uppercase ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Team 2</label>
+                  <label className={`text-xs font-bold uppercase ${isDarkMode ? 'text-slate-400' : 'text-slate-700'}`}>Team 2</label>
                   <input className={`w-full p-3 border rounded-xl ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'}`} value={teamNames.team2} onChange={e => setTeamNames({...teamNames, team2: e.target.value})} />
                 </div>
               </div>
 
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Match Overs</label>
-                  <span className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 px-3 py-1 rounded-full font-bold">{totalOvers}</span>
+                  <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-800'}`}>Match Overs</label>
+                  <span className={`px-3 py-1 rounded-full font-bold ${isDarkMode ? 'bg-indigo-900/40 text-indigo-400' : 'bg-indigo-600 text-white shadow-sm'}`}>
+                    {totalOvers}
+                  </span>
                 </div>
-                <input type="range" min="1" max="50" className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer" value={totalOvers} onChange={e => setTotalOvers(parseInt(e.target.value))} />
+                <input type="range" min="1" max="50" className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-600" value={totalOvers} onChange={e => setTotalOvers(parseInt(e.target.value))} />
               </div>
 
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Players per Team</label>
-                  <span className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 px-3 py-1 rounded-full font-bold">{totalPlayers}</span>
+                  <label className={`text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-800'}`}>Players per Team</label>
+                  <span className={`px-3 py-1 rounded-full font-bold ${isDarkMode ? 'bg-indigo-900/40 text-indigo-400' : 'bg-indigo-600 text-white shadow-sm'}`}>
+                    {totalPlayers}
+                  </span>
                 </div>
-                <input type="range" min="2" max="11" className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer" value={totalPlayers} onChange={e => setTotalPlayers(parseInt(e.target.value))} />
+                <input type="range" min="2" max="11" className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-600" value={totalPlayers} onChange={e => setTotalPlayers(parseInt(e.target.value))} />
               </div>
 
               <button onClick={startGame} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-all">
