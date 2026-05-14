@@ -10,16 +10,18 @@ import {
   AlertTriangle,
   Keyboard,
   Moon,
-  Sun
+  Sun,
+  Undo2 // Added Undo icon
 } from 'lucide-react';
 
 /**
- * Advanced Cricket Score Tracking Application
+ * Advanced Cricket Score Tracking Application with Undo Support
+ * Features:
+ * - Full Undo/Redo logic for match states
  * - Custom runs (text input) for rare scenarios
  * - CSV Export functionality for match logs
  * - Dark mode toggle
  * - Complex scoring: Extras + Runs + Run Outs
- * - Multi-player/Overs setup
  */
 
 const App = () => {
@@ -67,6 +69,7 @@ const App = () => {
     if (allHistory.length === 0) return;
 
     const headers = ["Innings", "Team", "Over", "Ball", "Result", "Total Runs", "Is Wicket"];
+    // Flatten the history to match the export requirements
     const rows = allHistory.reverse().map(h => [
       h.inn,
       h.team,
@@ -142,19 +145,24 @@ const App = () => {
     const updatedInnings = [...innings];
     const target = { ...updatedInnings[currentInningsIdx] };
 
+    // Update statistics
     target.runs += runChange;
     target.wickets += wicketChange;
     target.deliveries += ballIncrement;
     target.extras += extraChange;
     
+    // Store in history with all deltas for undo capability
     target.history = [
       {
         ballNum: target.deliveries,
         label: eventLabel,
         runs: runChange,
-        isWicket: wicketChange > 0,
+        wickets: wicketChange,
+        ballDelta: ballIncrement,
+        extras: extraChange,
         over: Math.floor(target.deliveries / 6),
-        ballInOver: (target.deliveries % 6) || 6
+        ballInOver: (target.deliveries % 6) || 6,
+        isWicket: wicketChange > 0
       },
       ...target.history
     ];
@@ -162,10 +170,12 @@ const App = () => {
     updatedInnings[currentInningsIdx] = target;
     setInnings(updatedInnings);
     
+    // Reset UI state
     setSelectedRuns(0);
     setCustomRunInput('');
     setShowCustomInput(false);
 
+    // Check for game end/innings switch conditions
     const isWicketsOut = target.wickets >= maxWickets;
     const isOversDone = target.deliveries >= totalOvers * 6;
     const isTargetReached = currentInningsIdx === 1 && target.runs > innings[0].runs;
@@ -180,12 +190,49 @@ const App = () => {
     }
   };
 
+  const undoLastBall = () => {
+    // 1. Identify which innings we are undoing from
+    let activeIdx = currentInningsIdx;
+    let currentInnsState = { ...innings[activeIdx] };
+
+    // If game is finished, we stay in the last innings index but change state
+    if (gameState === 'finished') {
+      setGameState('innings2');
+    }
+
+    // If current history is empty but we're in 2nd innings, move back to 1st innings
+    if (currentInnsState.history.length === 0 && activeIdx === 1) {
+      activeIdx = 0;
+      currentInnsState = { ...innings[0] };
+      setCurrentInningsIdx(0);
+      setGameState('innings1');
+    }
+
+    // If history is still empty (at very start of match), do nothing
+    if (currentInnsState.history.length === 0) return;
+
+    // 2. Extract the last action and revert stats
+    const [lastAction, ...remainingHistory] = currentInnsState.history;
+
+    currentInnsState.runs -= lastAction.runs;
+    currentInnsState.wickets -= lastAction.wickets;
+    currentInnsState.deliveries -= lastAction.ballDelta;
+    currentInnsState.extras -= lastAction.extras;
+    currentInnsState.history = remainingHistory;
+
+    // 3. Update state
+    const updatedInnings = [...innings];
+    updatedInnings[activeIdx] = currentInnsState;
+    setInnings(updatedInnings);
+  };
+
   const startGame = () => {
     setInnings([
       { team: teamNames.team1, runs: 0, wickets: 0, deliveries: 0, extras: 0, history: [] },
       { team: teamNames.team2, runs: 0, wickets: 0, deliveries: 0, extras: 0, history: [] }
     ]);
     setGameState('innings1');
+    setCurrentInningsIdx(0);
   };
 
   const formatOvers = (balls) => `${Math.floor(balls / 6)}.${balls % 6}`;
@@ -219,7 +266,7 @@ const App = () => {
                 <button onClick={exportToCSV} className="text-slate-400 hover:text-white" title="Export CSV">
                   <Download className="w-5 h-5" />
                 </button>
-                <button onClick={() => setGameState('setup')} className="text-slate-400 hover:text-white">
+                <button onClick={() => setGameState('setup')} className="text-slate-400 hover:text-white" title="Reset Game">
                   <RotateCcw className="w-5 h-5" />
                 </button>
               </div>
@@ -277,7 +324,15 @@ const App = () => {
           <div className={`${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} rounded-3xl shadow-xl p-8 text-center border-t-8 border-indigo-500`}>
             <Trophy className="w-16 h-16 text-amber-500 mx-auto mb-4" />
             <h2 className="text-2xl font-black mb-2">Match Complete</h2>
-            <div className={`${isDarkMode ? 'bg-indigo-900/30 text-indigo-300' : 'bg-indigo-50 text-indigo-700'} py-4 px-6 rounded-2xl text-xl font-bold mb-8`}>{getMatchResult()}</div>
+            <div className={`${isDarkMode ? 'bg-indigo-900/30 text-indigo-300' : 'bg-indigo-50 text-indigo-700'} py-4 px-6 rounded-2xl text-xl font-bold mb-4`}>{getMatchResult()}</div>
+            
+            <button 
+              onClick={undoLastBall} 
+              className={`w-full mb-3 flex items-center justify-center gap-2 font-bold py-3 rounded-xl border ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`}
+            >
+              <Undo2 className="w-4 h-4 text-orange-500"/> Correct Last Action (Undo)
+            </button>
+
             <button onClick={exportToCSV} className={`w-full mb-3 flex items-center justify-center gap-2 font-bold py-3 rounded-xl border ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'}`}><Download className="w-4 h-4"/> Export Full Log</button>
             <button onClick={() => setGameState('setup')} className="w-full bg-slate-900 dark:bg-indigo-600 text-white font-bold py-4 rounded-xl">New Match</button>
           </div>
@@ -300,10 +355,12 @@ const App = () => {
                     </div>
                   </div>
                   {currentInningsIdx === 1 && (
-                    <div className={`text-right px-4 py-2 rounded-xl border ${isDarkMode ? 'bg-indigo-900/20 border-indigo-900/50' : 'bg-indigo-50 border-indigo-100'}`}>
-                      <p className={`text-[10px] font-bold uppercase ${isDarkMode ? 'text-indigo-400' : 'text-indigo-400'}`}>Target</p>
-                      <p className={`text-xl font-black ${isDarkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>{innings[0].runs + 1}</p>
-                      <p className={`text-[10px] font-medium italic ${isDarkMode ? 'text-indigo-500' : 'text-indigo-600'}`}>Need {innings[0].runs + 1 - currentInnings.runs} in {totalOvers * 6 - currentInnings.deliveries} balls</p>
+                    <div className={`text-right px-6 py-4 rounded-2xl border-2 ${isDarkMode ? 'bg-indigo-900/20 border-indigo-500/50' : 'bg-indigo-50 border-indigo-200'} shadow-sm`}>
+                      <p className={`text-xs font-black uppercase tracking-wider ${isDarkMode ? 'text-indigo-400' : 'text-indigo-500'}`}>Target</p>
+                      <p className={`text-4xl font-black mb-1 ${isDarkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>{innings[0].runs + 1}</p>
+                      <p className={`text-sm font-bold ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                        Need <span className="text-lg">{innings[0].runs + 1 - currentInnings.runs}</span> runs in <span className="text-lg">{totalOvers * 6 - currentInnings.deliveries}</span> balls
+                      </p>
                     </div>
                   )}
                 </div>
@@ -366,16 +423,25 @@ const App = () => {
               <button onClick={() => recordBall('RUN_OUT')} className="bg-orange-600 hover:bg-orange-700 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-colors">Run Out</button>
             </div>
 
-            {/* Ball-by-ball Log */}
+            {/* Ball-by-ball Log and Undo */}
             <div className={`${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} rounded-2xl shadow-sm border overflow-hidden`}>
               <div className={`px-4 py-3 border-b flex items-center justify-between ${isDarkMode ? 'bg-slate-800/40 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
                 <div className="flex items-center gap-2">
                   <History className={`w-4 h-4 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
                   <span className={`text-xs font-bold uppercase ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Recent History</span>
                 </div>
-                <button onClick={exportToCSV} className="text-[10px] flex items-center gap-1 text-indigo-500 font-bold hover:underline">
-                  <Download className="w-3 h-3" /> Export CSV
-                </button>
+                <div className="flex items-center gap-4">
+                  <button 
+                    onClick={undoLastBall} 
+                    className="text-[10px] flex items-center gap-1 text-orange-500 font-bold hover:underline transition-all active:scale-90"
+                    title="Undo Last Ball"
+                  >
+                    <Undo2 className="w-3 h-3" /> UNDO
+                  </button>
+                  <button onClick={exportToCSV} className="text-[10px] flex items-center gap-1 text-indigo-500 font-bold hover:underline">
+                    <Download className="w-3 h-3" /> EXPORT
+                  </button>
+                </div>
               </div>
               <div className="max-h-48 overflow-y-auto">
                 {currentInnings.history.map((ball, idx) => (
@@ -394,7 +460,7 @@ const App = () => {
       <footer className="max-w-xl mx-auto px-4 text-center mt-6">
         <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full shadow-sm border text-[10px] font-medium ${isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-500' : 'bg-white border-slate-200 text-slate-400'}`}>
           <AlertTriangle className="w-3 h-3 text-amber-500" />
-          Tip: Use the "Custom runs" toggle for rare high-scoring balls.
+          Tip: You can undo actions even across innings transitions.
         </div>
       </footer>
     </div>
