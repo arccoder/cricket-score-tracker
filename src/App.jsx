@@ -14,6 +14,8 @@ import {
   Undo2 // Added Undo icon
 } from 'lucide-react';
 
+
+
 /**
  * Advanced Cricket Score Tracking Application with Undo Support
  * Features:
@@ -24,9 +26,16 @@ import {
  * - Complex scoring: Extras + Runs + Run Outs
  */
 
+const GA_MEASUREMENT_ID = 'G-NY2GTMCVWE'; // Replace this with your GA Measurement ID
+const GA_CONSENT_KEY = 'ga-consent';
+
 const App = () => {
   // Theme State
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [gaConsent, setGaConsent] = useState(() => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(GA_CONSENT_KEY);
+  });
 
   // Game Configuration State
   const [gameState, setGameState] = useState('setup'); 
@@ -60,6 +69,33 @@ const App = () => {
     setIsDarkMode(newTheme);
     localStorage.setItem('cricket-theme', newTheme ? 'dark' : 'light');
   };
+
+  const saveConsent = (value) => {
+    localStorage.setItem(GA_CONSENT_KEY, value);
+    setGaConsent(value);
+  };
+
+  const loadAnalytics = () => {
+    if (!GA_MEASUREMENT_ID || GA_MEASUREMENT_ID.includes('XXXXXXXX')) return;
+    if (window.gtag) return;
+
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+    document.head.appendChild(script);
+
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    window.gtag('js', new Date());
+    window.gtag('config', GA_MEASUREMENT_ID, { page_path: window.location.pathname });
+  };
+
+  useEffect(() => {
+    if (gaConsent === 'accepted') loadAnalytics();
+  }, [gaConsent]);
+
+  const acceptAnalytics = () => saveConsent('accepted');
+  const declineAnalytics = () => saveConsent('denied');
 
   // CSV Export Logic
   const exportToCSV = () => {
@@ -246,7 +282,7 @@ const App = () => {
   };
 
   return (
-    <div className={`min-h-screen font-sans transition-colors duration-300 pb-12 ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}`}>
+    <div className={`min-h-screen font-sans transition-colors duration-300 pb-12 ${gaConsent === null ? 'pb-28' : ''} ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}`}>
       <header className={`${isDarkMode ? 'bg-slate-900 border-b border-slate-800' : 'bg-slate-900'} text-white p-4 sticky top-0 z-20 shadow-lg`}>
         <div className="max-w-xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -274,6 +310,25 @@ const App = () => {
           </div>
         </div>
       </header>
+
+      {gaConsent === null && (
+        <div className={`fixed inset-x-0 bottom-0 z-30 p-4 transition-colors ${isDarkMode ? 'bg-slate-900/95 text-slate-100 border-t border-slate-700' : 'bg-white/95 text-slate-900 border-t border-slate-200'}`}>
+          <div className="max-w-xl mx-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-left">
+              <p className="font-semibold">Analytics consent</p>
+              <p className="text-sm opacity-80">We only enable Google Analytics if you accept.</p>
+            </div>
+            <div className="flex flex-wrap gap-2 justify-end">
+              <button onClick={declineAnalytics} className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold transition hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800">
+                Decline
+              </button>
+              <button onClick={acceptAnalytics} className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700">
+                Accept
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-xl mx-auto p-4 space-y-4">
         {gameState === 'setup' ? (
