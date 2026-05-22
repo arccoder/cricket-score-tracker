@@ -27,14 +27,14 @@ import {
  */
 
 const GA_MEASUREMENT_ID = 'G-NY2GTMCVWE'; // Replace this with your GA Measurement ID
-const GA_CONSENT_KEY = 'ga-consent';
+const GA_NOTICE_KEY = 'ga-notice-hidden';
 
 const App = () => {
   // Theme State
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [gaConsent, setGaConsent] = useState(() => {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem(GA_CONSENT_KEY);
+  const [gaNoticeVisible, setGaNoticeVisible] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem(GA_NOTICE_KEY) !== 'true';
   });
 
   // Game Configuration State
@@ -70,9 +70,9 @@ const App = () => {
     localStorage.setItem('cricket-theme', newTheme ? 'dark' : 'light');
   };
 
-  const saveConsent = (value) => {
-    localStorage.setItem(GA_CONSENT_KEY, value);
-    setGaConsent(value);
+  const hideGaNotice = () => {
+    localStorage.setItem(GA_NOTICE_KEY, 'true');
+    setGaNoticeVisible(false);
   };
 
   const loadAnalytics = () => {
@@ -91,11 +91,10 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (gaConsent === 'accepted') loadAnalytics();
-  }, [gaConsent]);
+    loadAnalytics();
+  }, []);
 
-  const acceptAnalytics = () => saveConsent('accepted');
-  const declineAnalytics = () => saveConsent('denied');
+  const acknowledgeAnalyticsNotice = () => hideGaNotice();
 
   // CSV Export Logic
   const exportToCSV = () => {
@@ -282,7 +281,7 @@ const App = () => {
   };
 
   return (
-    <div className={`min-h-screen font-sans transition-colors duration-300 pb-12 ${gaConsent === null ? 'pb-28' : ''} ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}`}>
+    <div className={`min-h-screen font-sans transition-colors duration-300 pb-12 ${gaNoticeVisible ? 'pb-28' : ''} ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}`}>
       <header className={`${isDarkMode ? 'bg-slate-900 border-b border-slate-800' : 'bg-slate-900'} text-white p-4 sticky top-0 z-20 shadow-lg`}>
         <div className="max-w-xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -311,19 +310,16 @@ const App = () => {
         </div>
       </header>
 
-      {gaConsent === null && (
+      {gaNoticeVisible && (
         <div className={`fixed inset-x-0 bottom-0 z-30 p-4 transition-colors ${isDarkMode ? 'bg-slate-900/95 text-slate-100 border-t border-slate-700' : 'bg-white/95 text-slate-900 border-t border-slate-200'}`}>
           <div className="max-w-xl mx-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-left">
-              <p className="font-semibold">Analytics consent</p>
-              <p className="text-sm opacity-80">We only enable Google Analytics if you accept.</p>
+              <p className="font-semibold">Necessary analytics tracking</p>
+              <p className="text-sm opacity-80">This site uses essential analytics tracking to improve the experience. By continuing to use the site, you agree.</p>
             </div>
             <div className="flex flex-wrap gap-2 justify-end">
-              <button onClick={declineAnalytics} className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold transition hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800">
-                Decline
-              </button>
-              <button onClick={acceptAnalytics} className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700">
-                Accept
+              <button onClick={acknowledgeAnalyticsNotice} className="rounded-full bg-slate-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
+                Got it
               </button>
             </div>
           </div>
